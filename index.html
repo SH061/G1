@@ -211,6 +211,7 @@
     color:var(--accent-active); font-size:10px; font-weight:700; display:grid; place-items:center;
   }
   .blank-slot input{ font-size:15px; }
+  .blank-slot .choices{ margin-top:0; }
   /* 초성 힌트칩 */
   .hint-chip{
     display:inline-flex; align-items:center; gap:7px; background:var(--bg); border:1.5px dashed var(--accent);
@@ -987,18 +988,18 @@ const QUESTIONS = [
   { id:"q6", clause:1, page:1, type:"choice", options:["있다.","없다."], correctAnswer:"있다.",
     text:"‘듀ᇰ귁’의 ‘ㆁ’은 소릿값(음가)이 (     )" },
 
-  { id:"q7", clause:1, page:1, type:"blank2",
+  { id:"q7", clause:1, page:1, type:"choice2",
     text:"‘말ᄊᆞ미’는 (     )를, ‘듀ᇰ귁에’는 (     )를 하였다.",
-    blanks:[
-      { label:"‘말ᄊᆞ미’의 표기 방식", correctAnswer:"이어적기·연철" },
-      { label:"‘듀ᇰ귁에’의 표기 방식", correctAnswer:"끊어적기·분철" },
+    parts:[
+      { label:"‘말ᄊᆞ미’의 표기 방식", options:["이어적기·연철","끊어적기·분철"], correctAnswer:"이어적기·연철" },
+      { label:"‘듀ᇰ귁에’의 표기 방식", options:["이어적기·연철","끊어적기·분철"], correctAnswer:"끊어적기·분철" },
     ] },
 
-  { id:"q8", clause:1, page:1, type:"blank2",
+  { id:"q8", clause:1, page:1, type:"choice2",
     text:"‘듀ᇰ귁에’를 (     )한 까닭은 (     )를 원음과 가깝게 표시하기 위함이다.",
-    blanks:[
-      { label:"‘듀ᇰ귁에’의 표기 방식", correctAnswer:"끊어적기" },
-      { label:"원음에 가깝게 표시하려는 대상", correctAnswer:"한자어" },
+    parts:[
+      { label:"‘듀ᇰ귁에’의 표기 방식", options:["이어적기","끊어적기"], correctAnswer:"끊어적기" },
+      { label:"원음에 가깝게 표시하려는 대상", options:["고유어","한자어"], correctAnswer:"한자어" },
     ] },
 
   { id:"q9", clause:1, page:1, type:"initial_hint_blank2",
@@ -1034,8 +1035,15 @@ QUESTIONS.forEach((q, qi)=>{
   } else if(q.type === "short"){
     SLOTS.push({ qIndex:qi, kind:"short", header:baseHeader, correct:"" });
   } else if(q.type === "choice_blank"){
-    SLOTS.push({ qIndex:qi, kind:"choice", header:baseHeader+" 〔①〕", partLabel:"①", correct:q.correctAnswer||"", options:q.options||[] });
+    SLOTS.push({ qIndex:qi, kind:"choice", header:baseHeader+" 〔①〕", partLabel:"①", correct:q.correctAnswer||"", options:q.options||[], label:(q.choiceLabel||"") });
     SLOTS.push({ qIndex:qi, kind:"blank",  header:baseHeader+" 〔②〕", partLabel:"②", correct:(q.blank&&q.blank.correctAnswer)||"", label:(q.blank&&q.blank.label)||"" });
+  } else if(q.type === "choice2"){
+    const ps = q.parts || [];
+    ps.forEach((p, pi)=>{
+      const mark = ["①","②","③","④"][pi] || ("("+(pi+1)+")");
+      SLOTS.push({ qIndex:qi, kind:"choice", header:baseHeader+" 〔"+mark+"〕", partLabel:mark,
+        correct:p.correctAnswer||"", options:p.options||[], label:p.label||"" });
+    });
   } else if(q.type === "blank2" || q.type === "initial_hint_blank2"){
     const bs = q.blanks || [];
     SLOTS.push({ qIndex:qi, kind:"blank", header:baseHeader+" 〔①〕", partLabel:"①", correct:(bs[0]&&bs[0].correctAnswer)||"", label:(bs[0]&&bs[0].label)||"" });
@@ -1047,6 +1055,14 @@ const Q_FIRST_SLOT = {};
 SLOTS.forEach((s, si)=>{ if(Q_FIRST_SLOT[s.qIndex]===undefined) Q_FIRST_SLOT[s.qIndex]=si; });
 const Q_SLOT_INDICES = {};
 QUESTIONS.forEach((q,qi)=>{ Q_SLOT_INDICES[qi] = SLOTS.map((s,si)=>s.qIndex===qi?si:-1).filter(x=>x>=0); });
+// 구절(clause) 안에서 이 문항이 몇 번째 하위문항인지 (①②③… 표시용)
+const CIRCLE = ["","①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮"];
+const Q_SUB_NO = {};
+(function(){ const cnt = {}; QUESTIONS.forEach((q,qi)=>{ const c = q.clause || 0; cnt[c] = (cnt[c]||0) + 1; Q_SUB_NO[qi] = cnt[c]; }); })();
+function qLabelText(qi){
+  const c = (QUESTIONS[qi] && QUESTIONS[qi].clause) || (qi+1);
+  return c + "번 문제";
+}
 
 const HEADERS = SLOTS.map(s=>s.header).concat(REFLECT_QUESTIONS);
 const CORRECT_ANSWERS = SLOTS.map(s=> s.kind==="short" ? "" : (s.correct||"") ).concat(["","",""]);
@@ -1325,11 +1341,10 @@ document.getElementById("btn-extra-back").addEventListener("click", ()=> setTab(
 /* ============================================================
    문항 화면
 ============================================================ */
-// 문항 라벨 — "N번 문제" (학습지 쪽수 대신 문항 번호). 교실에서 교사가
-// "3번 문제 볼게요"처럼 부르기 쉽도록.
+// 문항 라벨 — 구절 번호 기준 "N번 문제"(하위문항 ①~⑨는 모두 같은 "N번 문제").
 function renderQLabel(el, qIndex){
   if(!el) return;
-  el.textContent = (qIndex >= 0) ? ((qIndex + 1) + "번 문제") : "";
+  el.textContent = (qIndex >= 0) ? qLabelText(qIndex) : "";
 }
 
 function renderQuestion(){
@@ -1359,70 +1374,78 @@ function renderQuestion(){
   if(q.note){ noteEl.textContent = q.note; noteEl.classList.remove("hidden"); }
   else noteEl.classList.add("hidden");
 
-  const choicesEl = document.getElementById("q-choices");
-  const blanksEl = document.getElementById("q-blanks");
-  choicesEl.classList.add("hidden"); choicesEl.innerHTML = "";
-  blanksEl.classList.add("hidden"); blanksEl.innerHTML = "";
+  // 답 입력 영역 — 슬롯 단위로 그린다.
+  //  · kind:"choice" → 선택지 버튼(O/X·2·3지선다는 이어붙인 탭, ①~⑤는 한 줄)
+  //  · kind:"blank"  → 한 줄 입력창
+  //  · kind:"short"  → 여러 줄 입력창
+  // 한 문항에 슬롯이 2개 이상이면(빈칸/선택이 2군데) 각 칸에 ①②… 라벨을 붙인다.
+  document.getElementById("q-choices").classList.add("hidden");
+  const areaEl = document.getElementById("q-blanks");
+  areaEl.classList.remove("hidden");
+  areaEl.innerHTML = "";
 
   const slotIdxs = Q_SLOT_INDICES[qi];
+  const multi = slotIdxs.length > 1;
 
-  // 선택 파트 (choice / choice_blank의 ①)
-  if(q.type === "choice" || q.type === "choice_blank"){
-    const choiceSlot = slotIdxs.find(si => SLOTS[si].kind === "choice");
-    const opts = q.options || [];
-    choicesEl.classList.remove("hidden");
-    const isPureNumber = opts.length === 5 && opts.every(o=>/^[①②③④⑤]$/.test(o));
-    choicesEl.classList.toggle("five-col", isPureNumber);
-    choicesEl.classList.toggle("tab-seg", opts.length >= 2 && opts.length <= 3 && !isPureNumber);
-    const existing = state.answers[choiceSlot] || "";
-    opts.forEach(opt=>{
-      const btn = document.createElement("button");
-      btn.className = "choice-btn" + (existing === opt ? " picked" : "");
-      btn.textContent = opt;
-      btn.addEventListener("click", ()=>{
-        state.answers[choiceSlot] = opt;
-        Array.from(choicesEl.children).forEach(c=>c.classList.remove("picked"));
-        btn.classList.add("picked");
-        submitAnswerSoon();
-      });
-      choicesEl.appendChild(btn);
-    });
-  }
+  slotIdxs.forEach((si, k)=>{
+    const s = SLOTS[si];
 
-  // 빈칸 파트 (blank / blank2 / choice_blank의 ② / initial_hint_blank2)
-  const blankSlots = slotIdxs.filter(si => SLOTS[si].kind === "blank");
-  if(blankSlots.length){
-    blanksEl.classList.remove("hidden");
-    blankSlots.forEach((si, k)=>{
-      const s = SLOTS[si];
+    if(s.kind === "choice"){
       const wrap = document.createElement("div");
       wrap.className = "blank-slot";
-      const labelText = s.label || (blankSlots.length > 1 ? ("빈칸 " + (k+1)) : "답");
+      if(multi){
+        wrap.innerHTML = '<div class="bl-label"><span class="bl-num">'+(k+1)+'</span>'
+          + escapeHtml(s.label || ("선택 " + (k+1))) + '</div>';
+      }
+      const opts = s.options || [];
+      const isPureNumber = opts.length === 5 && opts.every(o=>/^[①②③④⑤]$/.test(o));
+      const grp = document.createElement("div");
+      grp.className = "choices";
+      if(isPureNumber) grp.classList.add("five-col");
+      else if(opts.length >= 2 && opts.length <= 3) grp.classList.add("tab-seg");
+      const existing = state.answers[si] || "";
+      opts.forEach(opt=>{
+        const btn = document.createElement("button");
+        btn.className = "choice-btn" + (existing === opt ? " picked" : "");
+        btn.textContent = opt;
+        btn.addEventListener("click", ()=>{
+          state.answers[si] = opt;
+          Array.from(grp.children).forEach(c=>c.classList.remove("picked"));
+          btn.classList.add("picked");
+          submitAnswerSoon();
+        });
+        grp.appendChild(btn);
+      });
+      wrap.appendChild(grp);
+      areaEl.appendChild(wrap);
+
+    } else if(s.kind === "blank"){
+      const wrap = document.createElement("div");
+      wrap.className = "blank-slot";
+      const labelText = s.label || (multi ? ("빈칸 " + (k+1)) : "답");
       wrap.innerHTML = '<div class="bl-label">'
-        + (blankSlots.length > 1 ? '<span class="bl-num">'+(k+1)+'</span>' : '')
+        + (multi ? '<span class="bl-num">'+(k+1)+'</span>' : '')
         + escapeHtml(labelText) + '</div>';
       const inp = document.createElement("input");
       inp.type = "text";
+      inp.setAttribute("data-slot", si);
       inp.value = state.answers[si] || "";
       inp.placeholder = "답을 입력하세요";
       inp.addEventListener("input", ()=>{ state.answers[si] = inp.value.trim(); });
       inp.addEventListener("change", submitAnswerSoon);
       wrap.appendChild(inp);
-      blanksEl.appendChild(wrap);
-    });
-  }
+      areaEl.appendChild(wrap);
 
-  // 서답형
-  if(q.type === "short"){
-    blanksEl.classList.remove("hidden");
-    const si = slotIdxs[0];
-    const ta = document.createElement("textarea");
-    ta.value = state.answers[si] || "";
-    ta.placeholder = "생각을 자유롭게 적어보세요";
-    ta.addEventListener("input", ()=>{ state.answers[si] = ta.value.trim(); });
-    ta.addEventListener("change", submitAnswerSoon);
-    blanksEl.appendChild(ta);
-  }
+    } else if(s.kind === "short"){
+      const ta = document.createElement("textarea");
+      ta.setAttribute("data-slot", si);
+      ta.value = state.answers[si] || "";
+      ta.placeholder = "생각을 자유롭게 적어보세요";
+      ta.addEventListener("input", ()=>{ state.answers[si] = ta.value.trim(); });
+      ta.addEventListener("change", submitAnswerSoon);
+      areaEl.appendChild(ta);
+    }
+  });
 
   // 조별 진행 안내
   const gn = document.getElementById("q-group-note");
@@ -1434,17 +1457,11 @@ function renderQuestion(){
 }
 
 function captureCurrentAnswer(){
-  // input/textarea는 이미 이벤트로 반영됨. 안전하게 한 번 더 읽는다.
-  document.querySelectorAll("#q-blanks input").forEach((inp, k)=>{
-    const qi = currentQIndex();
-    const blankSlots = Q_SLOT_INDICES[qi].filter(si => SLOTS[si].kind === "blank");
-    if(blankSlots[k] !== undefined) state.answers[blankSlots[k]] = inp.value.trim();
+  // 선택형은 클릭 시 이미 state.answers에 반영됨. 입력창만 슬롯 번호로 다시 읽는다.
+  document.querySelectorAll("#q-blanks [data-slot]").forEach(el=>{
+    const si = Number(el.getAttribute("data-slot"));
+    if(!isNaN(si)) state.answers[si] = el.value.trim();
   });
-  const ta = document.querySelector("#q-blanks textarea");
-  if(ta){
-    const qi = currentQIndex();
-    state.answers[Q_SLOT_INDICES[qi][0]] = ta.value.trim();
-  }
 }
 
 function currentQAnswered(){
@@ -2041,9 +2058,11 @@ function celebrateTamgu(c){
   document.getElementById("tg-celebrate").classList.remove("hidden");
 }
 function questionLabelFor(item, idx){
-  const num = (item.qIndex >= 0) ? ((item.qIndex+1) + "번 문제") : "성찰 질문";
+  const num = (item.qIndex >= 0)
+    ? (qLabelText(item.qIndex) + " " + (CIRCLE[Q_SUB_NO[item.qIndex]] || ""))
+    : "성찰 질문";
   const base = String(item.text || "문항").split("\n")[0].trim();
-  return num + " · 칸 " + (idx+1) + " (" + (base.length>36 ? base.slice(0,34)+"…" : base) + ")";
+  return num.trim() + " · 칸 " + (idx+1) + " (" + (base.length>36 ? base.slice(0,34)+"…" : base) + ")";
 }
 let qstatsTimer = null;
 function requestQuestionStatsRebuild(){
@@ -2203,7 +2222,11 @@ function buildQuestionJump(){
     const n = document.createElement("span");
     n.className = "qjn"; n.textContent = (idx + 1);
     const d = document.createElement("span");
-    d.className = "qjd"; d.textContent = ((item.qIndex >= 0 ? ((item.qIndex+1)+"번 · ") : "성찰 · ")) + qjumpDesc(item);
+    d.className = "qjd";
+    const pfx = (item.qIndex >= 0)
+      ? (qLabelText(item.qIndex) + " " + (CIRCLE[Q_SUB_NO[item.qIndex]] || "") + " · ")
+      : "성찰 · ";
+    d.textContent = pfx + qjumpDesc(item);
     row.appendChild(n); row.appendChild(d);
     if(idx === tqIndex){
       const now = document.createElement("span");
@@ -2272,7 +2295,7 @@ function renderTeacherQuestionView(showReveal){
   const tqPageEl = document.getElementById("tq-page");
   tqPageEl.textContent = isReflect
     ? ("성찰 질문 " + (item.slotIndex - SLOTS.length + 1))
-    : ((item.qIndex + 1) + "번 문제");
+    : qLabelText(item.qIndex);
   document.getElementById("tq-text").textContent = item.text;
 
   const guideEl = document.getElementById("tq-guide");
