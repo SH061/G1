@@ -1125,21 +1125,14 @@ const TEACHER_ITEMS = QUESTIONS.map((q, qi)=>{
     text: (CIRCLE[Q_SUB_NO[qi]] || "") + " " + String(q.text || q.guideText || "").split("\n")[0].trim(),
     slots: slots,
     scoredSlots: scored,
-    hasExtra: !!extraForClauseQ_(qi),
+    // ★ 추가설명 버튼은 참조표가 실제로 달린 그 문항에서만 (예: ❶ 2번)
+    hasExtra: !!q.extra,
   };
 }).concat(REFLECT_QUESTIONS.map(function(text,i){
   return { qIndex:-1, isReflect:true, type:"short", text:text, page:null,
            slots:[{ slotIndex: SLOTS.length+i, kind:"short", options:null, correct:"", label:"", partLabel:"" }],
            scoredSlots:[], hasExtra:false };
 }));
-// extraForClause는 아래에서 정의되므로, 데이터 구성 시점에 쓸 수 있는 경량 버전.
-function extraForClauseQ_(qi){
-  const clause = QUESTIONS[qi] ? QUESTIONS[qi].clause : null;
-  for(let i=0;i<QUESTIONS.length;i++){
-    if(QUESTIONS[i].clause === clause && QUESTIONS[i].extra) return QUESTIONS[i].extra;
-  }
-  return null;
-}
 
 /* ============================================================
    상태
@@ -1350,12 +1343,12 @@ function extraForClause(qi){
   return null;
 }
 function refreshExtraUnlocked(){
-  // 이 구절에 참조표가 있고, 그 참조표가 달린 문항을 이미 지났으면 "★ 추가설명" 활성화
-  const ex = extraForClause(currentQIndex());
-  const tab = document.getElementById("qtab-extra");
-  const unlocked = !!(ex && currentQIndex() >= ex.atIndex);
+  // "★ 추가설명"은 참조표(★ 자료)가 실제로 달린 그 문항에서만 활성화된다
+  // (예: ❶에서는 2번 문항 화면에서만. 다른 문항에서는 흐리게 비활성).
+  const q = QUESTIONS[currentQIndex()];
+  const unlocked = !!(q && q.extra);
   state.extraUnlocked = unlocked;
-  tab.classList.toggle("disabled", !unlocked);
+  document.getElementById("qtab-extra").classList.toggle("disabled", !unlocked);
 }
 // 참조표(★ 자료)를 전체화면으로 확대해서 보여준다. student·teacher 공용.
 function buildExtraTable(tableEl, extra){
