@@ -1078,8 +1078,12 @@ const TEACHER_ITEMS = SLOTS.map((s, si)=>{
     page: q.page,
     clauseTable: q.clauseTable || null,
     guideText: q.guideText || "",
-    text: (s.partLabel ? (s.partLabel + " ") : "") + String(q.text || q.guideText || "").split("\n")[0].trim()
-        + (s.label ? ("  —  " + s.label) : ""),
+    // 발문 앞에 구절 안 하위문항 번호(①~⑨). 한 문항이 슬롯 2개면 라벨 뒤에
+    // 그 칸이 몇 번째 칸인지(①②)도 덧붙인다.
+    text: (CIRCLE[Q_SUB_NO[s.qIndex]] || "") + " "
+        + String(q.text || q.guideText || "").split("\n")[0].trim()
+        + (s.label ? ("  —  " + (s.partLabel ? s.partLabel + " " : "") + s.label)
+                   : (s.partLabel ? ("  —  " + s.partLabel + " 칸") : "")),
   };
 }).concat(REFLECT_QUESTIONS.map((text,i)=>({ slotIndex: SLOTS.length+i, qIndex:-1, kind:"short", type:"short", isReflect:true, text:text, page:null })));
 
@@ -1359,15 +1363,16 @@ function renderQuestion(){
   if(q.guideText){ qGuideEl.textContent = q.guideText; qGuideEl.classList.remove("hidden"); }
   else qGuideEl.classList.add("hidden");
 
-  // 발문 — 초성 힌트는 [ㅂ ㄱ]을 칩으로 치환
+  // 발문 — 앞에 구절 안 하위문항 번호(①~⑨). 초성 힌트는 [ㅂ ㄱ]을 칩으로 치환.
   const qTextEl = document.getElementById("q-text");
+  const subMark = (CIRCLE[Q_SUB_NO[qi]] || "");
   if(q.type === "initial_hint_blank2" && q.hint){
-    qTextEl.innerHTML = escapeHtml(q.text).replace(
+    qTextEl.innerHTML = escapeHtml(subMark + " " + (q.text || "")).replace(
       "[" + escapeHtml(q.hint) + "]",
       '<span class="hint-chip">' + escapeHtml(q.hint) + ' <small>힌트</small></span>'
     );
   } else {
-    qTextEl.textContent = q.text || "";
+    qTextEl.textContent = (subMark ? subMark + " " : "") + (q.text || "");
   }
 
   const noteEl = document.getElementById("q-note");
@@ -2058,11 +2063,10 @@ function celebrateTamgu(c){
   document.getElementById("tg-celebrate").classList.remove("hidden");
 }
 function questionLabelFor(item, idx){
-  const num = (item.qIndex >= 0)
-    ? (qLabelText(item.qIndex) + " " + (CIRCLE[Q_SUB_NO[item.qIndex]] || ""))
-    : "성찰 질문";
+  const num = (item.qIndex >= 0) ? qLabelText(item.qIndex) : "성찰 질문";
+  // item.text는 이미 "⑦ ‘말ᄊᆞ미’는 …" 처럼 하위문항 번호로 시작한다.
   const base = String(item.text || "문항").split("\n")[0].trim();
-  return num.trim() + " · 칸 " + (idx+1) + " (" + (base.length>36 ? base.slice(0,34)+"…" : base) + ")";
+  return num + " · " + (base.length>40 ? base.slice(0,38)+"…" : base);
 }
 let qstatsTimer = null;
 function requestQuestionStatsRebuild(){
@@ -2223,9 +2227,8 @@ function buildQuestionJump(){
     n.className = "qjn"; n.textContent = (idx + 1);
     const d = document.createElement("span");
     d.className = "qjd";
-    const pfx = (item.qIndex >= 0)
-      ? (qLabelText(item.qIndex) + " " + (CIRCLE[Q_SUB_NO[item.qIndex]] || "") + " · ")
-      : "성찰 · ";
+    // qjumpDesc(item)는 이미 "⑦ ‘말ᄊᆞ미’는 …"로 시작한다.
+    const pfx = (item.qIndex >= 0) ? (qLabelText(item.qIndex) + " · ") : "성찰 · ";
     d.textContent = pfx + qjumpDesc(item);
     row.appendChild(n); row.appendChild(d);
     if(idx === tqIndex){
