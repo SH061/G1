@@ -170,7 +170,7 @@
   .qtab.disabled{ opacity:.4; cursor:default; }
   .card.tabbed{ border-radius:0 14px 14px 14px; margin-top:0; }
 
-  /* ===== 추가자료 표 ===== */
+  /* ===== 추가설명 표 ===== */
   .extra-title{ font-size:14px; font-weight:700; margin:0 0 10px; }
   .extra-table{ width:100%; border-collapse:collapse; font-size:12px; }
   .extra-table th, .extra-table td{
@@ -179,6 +179,33 @@
   }
   .extra-table th{ background:var(--panel-2); font-weight:700; color:var(--muted); }
   .extra-scroll{ overflow-x:auto; }
+
+  /* ★ 추가설명 — 전체화면 확대 오버레이 (0.6배 → 1배로 튀어오르는 모션) */
+  .extra-overlay{
+    position:fixed; inset:0; z-index:160; padding:3vh 3vw;
+    background:rgba(20,20,19,0); display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .28s ease, background .28s ease;
+  }
+  .extra-overlay.show{ background:rgba(20,20,19,.6); opacity:1; }
+  .extra-overlay-inner{
+    background:var(--bg); border:1px solid var(--line); border-radius:18px;
+    width:100%; max-width:1500px; max-height:94vh; overflow:hidden;
+    padding:26px 30px 22px; position:relative;
+    transform:scale(.6); transform-origin:center;
+    transition:transform .34s cubic-bezier(.18,1.1,.3,1);
+  }
+  .extra-overlay.show .extra-overlay-inner{ transform:scale(1); }
+  .extra-overlay-title{
+    font-size:clamp(20px, 3.4vw, 40px); font-weight:700; margin:0 0 16px; color:var(--accent-active);
+  }
+  .extra-overlay-scroll{ overflow:auto; max-height:calc(94vh - 130px); }
+  .extra-table-big{ font-size:clamp(15px, 2.2vw, 30px); }
+  .extra-table-big th, .extra-table-big td{ padding:calc(8px + .6vw) calc(6px + .5vw); }
+  .extra-ov-close{ position:absolute; right:22px; top:18px; font-size:15px; padding:8px 16px; }
+  @media (prefers-reduced-motion:reduce){
+    .extra-overlay-inner{ transition:none; transform:none; }
+    .extra-overlay.show .extra-overlay-inner{ transform:none; }
+  }
 
   .q-guide{ font-size:15px; color:var(--muted); line-height:1.6; margin:6px 0 2px; white-space:pre-wrap; }
   .qtext{ font-size:17px; font-weight:700; line-height:1.7; margin:6px 0 4px; white-space:pre-wrap; }
@@ -352,6 +379,12 @@
   #tq-note{ font-size:calc(26px * var(--tq-scale, 1)); white-space:pre-wrap; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin:12px 0; line-height:1.6; }
   #tq-choices{ margin-top:10px; }
   #tq-choices .choice-btn{ cursor:default; font-size:calc(30px * var(--tq-scale, 1)); padding:calc(18px * var(--tq-scale, 1)) calc(12px * var(--tq-scale, 1)); }
+  /* 교사용 답 영역 — 문항의 모든 칸(선택지/빈칸)을 세로로 함께 */
+  .tq-answers{ display:block; }
+  .tq-ans-block{ margin-top:calc(14px * var(--tq-scale, 1)); }
+  .tq-ans-block .choices{ margin-top:calc(6px * var(--tq-scale, 1)); }
+  .tq-ans-label{ font-size:calc(22px * var(--tq-scale, 1)); font-weight:700; color:var(--accent-active); margin-bottom:calc(6px * var(--tq-scale, 1)); }
+  .tq-blank-ph{ font-size:calc(24px * var(--tq-scale, 1)); color:var(--muted); background:var(--panel-2); border:1px dashed var(--line); border-radius:10px; padding:calc(12px * var(--tq-scale,1)) calc(16px * var(--tq-scale,1)); }
 
   .reveal-gate{ text-align:center; margin:10px 0; }
   .reveal-gate .btn.primary{ font-size:22px; font-weight:800; padding:20px 36px; }
@@ -632,10 +665,10 @@
       <div class="clause-grid" id="clause-grid"></div>
     </div>
 
-    <!-- 문항 / 추가자료 탭 -->
+    <!-- 문항 / 추가설명 탭 (추가설명은 누르면 ★ 자료가 전체화면으로 확대됨) -->
     <div class="qtabs">
       <div class="qtab on" id="qtab-q">문항</div>
-      <div class="qtab disabled" id="qtab-extra">추가자료</div>
+      <div class="qtab disabled" id="qtab-extra">★ 추가설명</div>
     </div>
 
     <div class="card tabbed" id="q-card">
@@ -662,12 +695,6 @@
       <div class="conn-status-inline" id="save-status-inline"></div>
     </div>
 
-    <!-- 추가자료 패널 -->
-    <div class="card tabbed hidden" id="extra-card">
-      <p class="extra-title" id="extra-title"></p>
-      <div class="extra-scroll"><table class="extra-table" id="extra-table"></table></div>
-      <div class="btnrow"><button class="btn ghost" id="btn-extra-back">◀ 문항으로 돌아가기</button></div>
-    </div>
   </section>
 
   <!-- 성찰 질문 화면 -->
@@ -787,11 +814,12 @@
             </div>
           </div>
           <div id="tq-guide" class="reflect-guide hidden"></div>
+          <button class="btn ghost hidden" id="btn-tq-extra" style="margin:8px 0; font-size:calc(20px * var(--tq-scale,1)); padding:calc(10px * var(--tq-scale,1)) calc(18px * var(--tq-scale,1));">★ 추가설명 (전체화면)</button>
           <div class="clause-box collapsed hidden" id="tq-clause">
             <div class="clause-grid" id="tq-clause-grid"></div>
           </div>
           <div id="tq-note" class="hidden"></div>
-          <div id="tq-choices" class="choices hidden"></div>
+          <div id="tq-choices" class="tq-answers hidden"></div>
           <div id="reveal-gate" class="reveal-gate"><button class="btn primary" id="btn-reveal">결과 보기</button></div>
           <div id="tq-result" class="hidden">
             <div class="result-tabs" id="result-tabs"></div>
@@ -842,6 +870,15 @@
 
 <div class="accuracy-mirage hidden" id="accuracy-mirage">
   <div class="accuracy-mirage-num" id="accuracy-mirage-num"></div>
+</div>
+
+<!-- ★ 추가설명 — "추가설명" 탭을 누르면 참고 자료가 전체화면으로 확대된다 -->
+<div class="extra-overlay hidden" id="extra-overlay">
+  <div class="extra-overlay-inner">
+    <div class="extra-overlay-title" id="extra-ov-title"></div>
+    <div class="extra-overlay-scroll"><table class="extra-table extra-table-big" id="extra-ov-table"></table></div>
+    <button class="btn ghost extra-ov-close" id="extra-ov-close">닫기 ✕</button>
+  </div>
 </div>
 
 <div class="problemstop-overlay hidden" id="problemstop-overlay">
@@ -1067,25 +1104,42 @@ function qLabelText(qi){
 const HEADERS = SLOTS.map(s=>s.header).concat(REFLECT_QUESTIONS);
 const CORRECT_ANSWERS = SLOTS.map(s=> s.kind==="short" ? "" : (s.correct||"") ).concat(["","",""]);
 
-// 교사 "문항별 결과" — 슬롯 하나 = 카드 하나 + 성찰질문 3개
-const TEACHER_ITEMS = SLOTS.map((s, si)=>{
-  const q = QUESTIONS[s.qIndex];
+// 교사 "문항별 결과" — 카드 하나 = 문항 하나(문제의 흐름이 끊기지 않게
+// 발문·안내문·형태소표·모든 빈칸/선택지를 한 화면에 함께 보여준다) + 성찰질문 3개.
+// 칸이 2개인 문항(빈칸 2개·선택 2개 등)은 결과 영역에서 ①②로 나눠 집계한다.
+const TEACHER_ITEMS = QUESTIONS.map((q, qi)=>{
+  const slots = Q_SLOT_INDICES[qi].map(function(si){
+    const s = SLOTS[si];
+    return { slotIndex: si, kind: s.kind, options: s.options || null,
+             correct: s.correct || "", label: s.label || "", partLabel: s.partLabel || "" };
+  });
+  const scored = slots.filter(function(x){ return x.kind === "choice" || (x.kind === "blank" && x.correct); });
   return {
-    slotIndex: si, qIndex: s.qIndex, kind: s.kind,
-    type: s.kind === "choice" ? "choice" : (s.kind === "short" ? "short" : "blank"),
-    options: s.options || null,
-    correctAnswer: s.correct || "",
+    qIndex: qi, isReflect: false,
+    type: (q.type === "short") ? "short" : "graded",
     page: q.page,
     clauseTable: q.clauseTable || null,
     guideText: q.guideText || "",
-    // 발문 앞에 구절 안 하위문항 번호(①~⑨). 한 문항이 슬롯 2개면 라벨 뒤에
-    // 그 칸이 몇 번째 칸인지(①②)도 덧붙인다.
-    text: (CIRCLE[Q_SUB_NO[s.qIndex]] || "") + " "
-        + String(q.text || q.guideText || "").split("\n")[0].trim()
-        + (s.label ? ("  —  " + (s.partLabel ? s.partLabel + " " : "") + s.label)
-                   : (s.partLabel ? ("  —  " + s.partLabel + " 칸") : "")),
+    hint: q.hint || "",
+    subMark: CIRCLE[Q_SUB_NO[qi]] || "",
+    text: (CIRCLE[Q_SUB_NO[qi]] || "") + " " + String(q.text || q.guideText || "").split("\n")[0].trim(),
+    slots: slots,
+    scoredSlots: scored,
+    hasExtra: !!extraForClauseQ_(qi),
   };
-}).concat(REFLECT_QUESTIONS.map((text,i)=>({ slotIndex: SLOTS.length+i, qIndex:-1, kind:"short", type:"short", isReflect:true, text:text, page:null })));
+}).concat(REFLECT_QUESTIONS.map(function(text,i){
+  return { qIndex:-1, isReflect:true, type:"short", text:text, page:null,
+           slots:[{ slotIndex: SLOTS.length+i, kind:"short", options:null, correct:"", label:"", partLabel:"" }],
+           scoredSlots:[], hasExtra:false };
+}));
+// extraForClause는 아래에서 정의되므로, 데이터 구성 시점에 쓸 수 있는 경량 버전.
+function extraForClauseQ_(qi){
+  const clause = QUESTIONS[qi] ? QUESTIONS[qi].clause : null;
+  for(let i=0;i<QUESTIONS.length;i++){
+    if(QUESTIONS[i].clause === clause && QUESTIONS[i].extra) return QUESTIONS[i].extra;
+  }
+  return null;
+}
 
 /* ============================================================
    상태
@@ -1241,7 +1295,6 @@ document.getElementById("btn-start").addEventListener("click", async ()=>{
   syncToGroupPointer(true);
 
   refreshExtraUnlocked();
-  setTab("q");
   renderQuestion();
   showScreen("question");
   reportProgress();
@@ -1254,7 +1307,6 @@ document.getElementById("btn-unassigned-retry").addEventListener("click", async 
     state.groupPointer = Number(j.groupPointer || 0);
     syncToGroupPointer(true);
     refreshExtraUnlocked();
-    setTab("q");
     renderQuestion();
     showScreen("question");
     reportProgress();
@@ -1298,49 +1350,48 @@ function extraForClause(qi){
   return null;
 }
 function refreshExtraUnlocked(){
-  // 이 구절에 참조표가 있고, 그 참조표가 달린 문항을 이미 지났으면 활성화
+  // 이 구절에 참조표가 있고, 그 참조표가 달린 문항을 이미 지났으면 "★ 추가설명" 활성화
   const ex = extraForClause(currentQIndex());
   const tab = document.getElementById("qtab-extra");
-  if(ex && currentQIndex() >= ex.atIndex){
-    state.extraUnlocked = true;
-    tab.classList.remove("disabled");
-    tab.textContent = "추가자료";
-  } else if(ex){
-    state.extraUnlocked = false;
-    tab.classList.add("disabled");
-    tab.textContent = "추가자료";
-  } else {
-    state.extraUnlocked = false;
-    tab.classList.add("disabled");
-    tab.textContent = "추가자료";
-  }
+  const unlocked = !!(ex && currentQIndex() >= ex.atIndex);
+  state.extraUnlocked = unlocked;
+  tab.classList.toggle("disabled", !unlocked);
 }
-function renderExtraPanel(){
-  const ex = extraForClause(currentQIndex());
-  if(!ex){ return; }
-  document.getElementById("extra-title").textContent = "★ " + ex.extra.title;
-  const table = document.getElementById("extra-table");
+// 참조표(★ 자료)를 전체화면으로 확대해서 보여준다. student·teacher 공용.
+function buildExtraTable(tableEl, extra){
   let html = "";
-  if(ex.extra.cols && ex.extra.cols.length){
-    html += "<tr>" + ex.extra.cols.map(c=>"<th>"+escapeHtml(c)+"</th>").join("") + "</tr>";
+  if(extra.cols && extra.cols.length){
+    html += "<tr>" + extra.cols.map(c=>"<th>"+escapeHtml(c)+"</th>").join("") + "</tr>";
   }
-  (ex.extra.rows||[]).forEach(row=>{
+  (extra.rows||[]).forEach(row=>{
     html += "<tr>" + row.map(cell=>"<td>"+escapeHtml(cell)+"</td>").join("") + "</tr>";
   });
-  table.innerHTML = html;
+  tableEl.innerHTML = html;
 }
-function setTab(tab){
-  if(tab === "extra" && !state.extraUnlocked) return;
-  state.tab = tab;
-  document.getElementById("qtab-q").classList.toggle("on", tab === "q");
-  document.getElementById("qtab-extra").classList.toggle("on", tab === "extra");
-  document.getElementById("q-card").classList.toggle("hidden", tab !== "q");
-  document.getElementById("extra-card").classList.toggle("hidden", tab !== "extra");
-  if(tab === "extra") renderExtraPanel();
+function openExtraOverlay(extra){
+  if(!extra) return;
+  document.getElementById("extra-ov-title").textContent = "★ " + extra.title;
+  buildExtraTable(document.getElementById("extra-ov-table"), extra);
+  const ov = document.getElementById("extra-overlay");
+  ov.classList.remove("hidden");
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ ov.classList.add("show"); }); });
 }
-document.getElementById("qtab-q").addEventListener("click", ()=> setTab("q"));
-document.getElementById("qtab-extra").addEventListener("click", ()=> setTab("extra"));
-document.getElementById("btn-extra-back").addEventListener("click", ()=> setTab("q"));
+function closeExtraOverlay(){
+  const ov = document.getElementById("extra-overlay");
+  ov.classList.remove("show");
+  setTimeout(()=>{ ov.classList.add("hidden"); }, 320);
+}
+document.getElementById("qtab-q").addEventListener("click", ()=>{ /* 항상 문항 탭 */ });
+document.getElementById("qtab-extra").addEventListener("click", ()=>{
+  if(!state.extraUnlocked) return;
+  const ex = extraForClause(currentQIndex());
+  if(ex) openExtraOverlay(ex.extra);
+});
+document.getElementById("extra-ov-close").addEventListener("click", closeExtraOverlay);
+document.getElementById("extra-overlay").addEventListener("click", (e)=>{ if(e.target.id === "extra-overlay") closeExtraOverlay(); });
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape" && !document.getElementById("extra-overlay").classList.contains("hidden")) closeExtraOverlay();
+});
 
 /* ============================================================
    문항 화면
@@ -2062,18 +2113,20 @@ function celebrateTamgu(c){
   document.getElementById("tg-cel-ans").textContent = '"' + c.text + '"';
   document.getElementById("tg-celebrate").classList.remove("hidden");
 }
-function questionLabelFor(item, idx){
-  const num = (item.qIndex >= 0) ? qLabelText(item.qIndex) : "성찰 질문";
-  // item.text는 이미 "⑦ ‘말ᄊᆞ미’는 …" 처럼 하위문항 번호로 시작한다.
-  const base = String(item.text || "문항").split("\n")[0].trim();
-  return num + " · " + (base.length>40 ? base.slice(0,38)+"…" : base);
+// "문항별 정답률" 시트용 칸(SLOT) 라벨 — 시트는 칸 단위 열이므로 슬롯 수만큼 만든다.
+function slotStatLabel(s){
+  const q = QUESTIONS[s.qIndex];
+  const sub = CIRCLE[Q_SUB_NO[s.qIndex]] || "";
+  const base = String(q.text || q.guideText || "").split("\n")[0].trim();
+  return (q.clause + "번 문제 " + sub + (s.partLabel ? (" " + s.partLabel + "칸") : "")
+    + " · " + (base.length>32 ? base.slice(0,30)+"…" : base));
 }
 let qstatsTimer = null;
 function requestQuestionStatsRebuild(){
   if(!gasConfigured()) return;
   clearTimeout(qstatsTimer);
   qstatsTimer = setTimeout(function(){
-    const labels = SLOTS.map((s,i)=> questionLabelFor(TEACHER_ITEMS[i], i));
+    const labels = SLOTS.map(function(s){ return slotStatLabel(s); });
     fetch(GAS_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -2206,6 +2259,13 @@ document.getElementById("btn-tq-next").addEventListener("click", ()=>{
   if(tqIndex<TEACHER_ITEMS.length-1){ tqIndex++; tqRevealed=false; renderTeacherQuestionView(true); }
 });
 document.getElementById("btn-reveal").addEventListener("click", ()=>{ tqRevealed = true; renderTeacherQuestionView(); });
+document.getElementById("btn-tq-extra").addEventListener("click", ()=>{
+  const item = TEACHER_ITEMS[tqIndex];
+  if(item && item.qIndex >= 0){
+    const ex = extraForClause(item.qIndex);
+    if(ex) openExtraOverlay(ex.extra);
+  }
+});
 
 /* ---------- 문항 바로 가기 ---------- */
 function qjumpDesc(item){
@@ -2256,6 +2316,7 @@ let resultTab = "student";
 function layoutTeacherQuestionDom(isReflect){
   const metaBlock = document.getElementById("tq-meta-block");
   const guideEl = document.getElementById("tq-guide");
+  const extraBtn = document.getElementById("btn-tq-extra");
   const clauseEl = document.getElementById("tq-clause");
   const noteEl = document.getElementById("tq-note");
   const choicesEl = document.getElementById("tq-choices");
@@ -2263,27 +2324,16 @@ function layoutTeacherQuestionDom(isReflect){
   const resultEl = document.getElementById("tq-result");
   document.getElementById("tq-layout-normal").classList.toggle("hidden", isReflect);
   document.getElementById("tq-layout-reflect").classList.toggle("hidden", !isReflect);
-  if(isReflect){
-    const qcardHost = document.getElementById("tq-reflect-qcard");
-    const resultsHost = document.getElementById("tq-reflect-results");
-    qcardHost.appendChild(metaBlock);
-    qcardHost.appendChild(guideEl);
-    qcardHost.appendChild(clauseEl);
-    qcardHost.appendChild(noteEl);
-    qcardHost.appendChild(choicesEl);
-    resultsHost.appendChild(revealGate);
-    resultsHost.appendChild(resultEl);
-  } else {
-    const cardHost = document.getElementById("tq-card-normal");
-    const sideHost = document.getElementById("tq-side-normal");
-    cardHost.appendChild(metaBlock);
-    cardHost.appendChild(guideEl);
-    cardHost.appendChild(clauseEl);
-    cardHost.appendChild(noteEl);
-    cardHost.appendChild(choicesEl);
-    sideHost.appendChild(revealGate);
-    sideHost.appendChild(resultEl);
-  }
+  const qcardHost = isReflect ? document.getElementById("tq-reflect-qcard") : document.getElementById("tq-card-normal");
+  const resultsHost = isReflect ? document.getElementById("tq-reflect-results") : document.getElementById("tq-side-normal");
+  qcardHost.appendChild(metaBlock);
+  qcardHost.appendChild(guideEl);
+  qcardHost.appendChild(extraBtn);
+  qcardHost.appendChild(clauseEl);
+  qcardHost.appendChild(noteEl);
+  qcardHost.appendChild(choicesEl);
+  resultsHost.appendChild(revealGate);
+  resultsHost.appendChild(resultEl);
 }
 
 function renderTeacherQuestionView(showReveal){
@@ -2295,16 +2345,29 @@ function renderTeacherQuestionView(showReveal){
   const isReflect = !!item.isReflect;
   layoutTeacherQuestionDom(isReflect);
 
-  const tqPageEl = document.getElementById("tq-page");
-  tqPageEl.textContent = isReflect
-    ? ("성찰 질문 " + (item.slotIndex - SLOTS.length + 1))
-    : qLabelText(item.qIndex);
-  document.getElementById("tq-text").textContent = item.text;
+  const q = item.qIndex >= 0 ? QUESTIONS[item.qIndex] : null;
+  const nReflectSoFar = isReflect ? (tqIndex - QUESTIONS.length + 1) : 0;
+
+  document.getElementById("tq-page").textContent = isReflect ? ("성찰 질문 " + nReflectSoFar) : qLabelText(item.qIndex);
+
+  // 발문 — 초성 힌트가 있으면 [ㅂ ㄱ]을 칩으로 치환
+  const tqTextEl = document.getElementById("tq-text");
+  if(!isReflect && item.hint){
+    tqTextEl.innerHTML = escapeHtml(item.text).replace(
+      "[" + escapeHtml(item.hint) + "]",
+      '<span class="hint-chip">' + escapeHtml(item.hint) + ' <small>힌트</small></span>');
+  } else {
+    tqTextEl.textContent = item.text;
+  }
 
   const guideEl = document.getElementById("tq-guide");
   if(item.guideText){ guideEl.textContent = item.guideText; guideEl.classList.remove("hidden"); } else guideEl.classList.add("hidden");
 
-  // 형태소 분석표 (교사용 — 그 문항의 구절 표)
+  // ★ 추가설명 버튼 (이 구절에 참조표가 있을 때)
+  const extraBtn = document.getElementById("btn-tq-extra");
+  extraBtn.classList.toggle("hidden", !(item.hasExtra && !isReflect));
+
+  // 형태소 분석표
   const clauseEl = document.getElementById("tq-clause");
   const clauseGrid = document.getElementById("tq-clause-grid");
   if(!isReflect && item.qIndex >= 0){
@@ -2318,23 +2381,43 @@ function renderTeacherQuestionView(showReveal){
   } else clauseEl.classList.add("hidden");
 
   const noteEl = document.getElementById("tq-note");
-  const q = item.qIndex >= 0 ? QUESTIONS[item.qIndex] : null;
   if(q && q.note){ noteEl.textContent = q.note; noteEl.classList.remove("hidden"); } else noteEl.classList.add("hidden");
 
-  const choicesEl = document.getElementById("tq-choices");
-  choicesEl.innerHTML = "";
-  if(item.type === "choice" && Array.isArray(item.options) && item.options.length){
-    choicesEl.classList.remove("hidden");
-    const isPureNumber = item.options.length === 5 && item.options.every(o=>/^[①②③④⑤]$/.test(o));
-    choicesEl.classList.toggle("five-col", isPureNumber);
-    choicesEl.classList.toggle("tab-seg", item.options.length>=2 && item.options.length<=3 && !isPureNumber);
-    item.options.forEach(opt=>{
-      const btn = document.createElement("div");
-      btn.className = "choice-btn";
-      btn.textContent = opt;
-      choicesEl.appendChild(btn);
+  // 답 영역 — 이 문항의 모든 칸(선택지/빈칸)을 함께 보여준다(정적, 클릭 불가).
+  const ansEl = document.getElementById("tq-choices");
+  ansEl.innerHTML = "";
+  if(!isReflect && item.slots && item.slots.length){
+    ansEl.classList.remove("hidden");
+    const multi = item.slots.length > 1;
+    item.slots.forEach((sl, k)=>{
+      const block = document.createElement("div");
+      block.className = "tq-ans-block";
+      if(multi){
+        block.innerHTML = '<div class="tq-ans-label">'+escapeHtml((["①","②","③","④"][k]||("("+(k+1)+")"))
+          + (sl.label ? (" " + sl.label) : "")) + '</div>';
+      }
+      if(sl.kind === "choice" && sl.options && sl.options.length){
+        const opts = sl.options;
+        const isPureNumber = opts.length === 5 && opts.every(o=>/^[①②③④⑤]$/.test(o));
+        const grp = document.createElement("div");
+        grp.className = "choices";
+        if(isPureNumber) grp.classList.add("five-col");
+        else if(opts.length>=2 && opts.length<=3) grp.classList.add("tab-seg");
+        opts.forEach(opt=>{
+          const b = document.createElement("div");
+          b.className = "choice-btn"; b.textContent = opt;
+          grp.appendChild(b);
+        });
+        block.appendChild(grp);
+      } else if(sl.kind === "blank"){
+        const ph = document.createElement("div");
+        ph.className = "tq-blank-ph";
+        ph.textContent = "(  학생이 직접 입력하는 칸  )";
+        block.appendChild(ph);
+      }
+      ansEl.appendChild(block);
     });
-  } else choicesEl.classList.add("hidden");
+  } else ansEl.classList.add("hidden");
 
   if(showReveal) showAccuracyMirage(item);
 
@@ -2387,35 +2470,67 @@ window.addEventListener("resize", function(){
 
 function renderResultTabsAndBody(item){
   const rows = (latestTeacherData && latestTeacherData.rows) || [];
-  const colIndex = item.slotIndex;
   const tabsEl = document.getElementById("result-tabs");
   const bodyEl = document.getElementById("result-body");
 
+  // 서답형·성찰 질문 — 탭 없이 답변 카드
   if(item.type === "short"){
     tabsEl.classList.add("hidden"); tabsEl.innerHTML = "";
-    renderShortAnswerCards(rows, colIndex, !!item.isReflect);
+    renderShortAnswerCards(rows, item.slots[0].slotIndex, !!item.isReflect);
     return;
   }
+
+  const scored = item.scoredSlots || [];
+  const multi = scored.length > 1;
 
   tabsEl.classList.remove("hidden");
   tabsEl.innerHTML = "";
   const t1 = mkTab("학생 정답", resultTab==="student", ()=>{ resultTab="student"; renderResultTabsAndBody(item); scheduleFitTeacherView(); });
   const t2 = mkTab("정답", resultTab==="answer", ()=>{ resultTab="answer"; renderResultTabsAndBody(item); scheduleFitTeacherView(); });
   tabsEl.appendChild(t1); tabsEl.appendChild(t2);
+  bodyEl.innerHTML = "";
 
   if(resultTab === "answer"){
-    bodyEl.innerHTML = '<div class="answer-big">'+escapeHtml(item.correctAnswer)+'</div>';
-    const big = bodyEl.querySelector(".answer-big");
-    fitAnswerBig(big);
-    if(item.type === "blank") celebrateAnswer(big, item.correctAnswer);
+    // 정답 탭 — 이 문항의 모든 칸 정답을 함께 보여준다.
+    scored.forEach((sl, k)=>{
+      const wrap = document.createElement("div");
+      wrap.style.marginBottom = "18px";
+      if(multi){
+        const lab = document.createElement("div");
+        lab.className = "tq-ans-label";
+        lab.textContent = (["①","②","③","④"][k] || ("("+(k+1)+")")) + (sl.label ? (" " + sl.label) : "");
+        wrap.appendChild(lab);
+      }
+      const big = document.createElement("div");
+      big.className = "answer-big";
+      big.textContent = sl.correct;
+      wrap.appendChild(big);
+      bodyEl.appendChild(wrap);
+      fitAnswerBig(big);
+      if(sl.kind === "blank") celebrateAnswer(big, sl.correct);
+    });
+    if(!scored.length) bodyEl.innerHTML = '<div class="stu-empty">채점 대상 칸이 없어요.</div>';
     return;
   }
-  if(item.type === "blank"){
-    // 빈칸형: 학생 답 카드 나열 → 클릭 확대
-    renderBlankAnswerCards(rows, colIndex, item);
-  } else {
-    renderDistributionPie(item, rows, colIndex, bodyEl);
-  }
+
+  // 학생 정답 탭 — 칸마다 분포(선택형 원그래프 / 빈칸형 답 카드)
+  scored.forEach((sl, k)=>{
+    if(multi){
+      const lab = document.createElement("div");
+      lab.className = "tq-ans-label";
+      lab.style.marginTop = k ? "22px" : "0";
+      lab.textContent = (["①","②","③","④"][k] || ("("+(k+1)+")")) + (sl.label ? (" " + sl.label) : "");
+      bodyEl.appendChild(lab);
+    }
+    const slotBody = document.createElement("div");
+    bodyEl.appendChild(slotBody);
+    if(sl.kind === "blank"){
+      renderBlankAnswerCardsInto(slotBody, rows, sl.slotIndex);
+    } else {
+      renderDistributionPieInto(slotBody, sl, rows, sl.slotIndex);
+    }
+  });
+  if(!scored.length) bodyEl.innerHTML = '<div class="stu-empty">채점 대상 칸이 없어요.</div>';
 }
 
 // 빈칸형 "정답 공개" 시 축하·격려 모션
@@ -2439,21 +2554,20 @@ function celebrateAnswer(big, correct){
 }
 
 // 빈칸형 학생 답 카드 (같은 답끼리 묶어 개수, 이름 없이) → 클릭 확대
-function renderBlankAnswerCards(rows, colIndex, item){
-  const bodyEl = document.getElementById("result-body");
+function renderBlankAnswerCardsInto(container, rows, colIndex){
   const map = new Map();
   rows.forEach(r=>{
     const v = String((r.answers||[])[colIndex]||"").trim();
     if(!v) return;
     map.set(v, (map.get(v)||0)+1);
   });
-  if(map.size === 0){ bodyEl.innerHTML = '<div class="stu-empty">아직 응답이 없어요.</div>'; return; }
+  if(map.size === 0){ container.innerHTML = '<div class="stu-empty">아직 응답이 없어요.</div>'; return; }
   const entries = Array.from(map.entries()).sort((a,b)=> b[1]-a[1]);
-  bodyEl.innerHTML = '<div class="card-list">' + entries.map(([val,cnt])=>
+  container.innerHTML = '<div class="card-list">' + entries.map(([val,cnt])=>
     '<div class="ans-card" data-full="'+encodeURIComponent(val)+'"><div style="font-size:22px;">'+escapeHtml(val)+'</div>'
     + '<div style="font-size:14px;color:var(--muted);margin-top:6px;">'+cnt+'명</div></div>'
   ).join("") + '</div>';
-  bodyEl.querySelectorAll(".ans-card").forEach(card=>{
+  container.querySelectorAll(".ans-card").forEach(card=>{
     card.addEventListener("click", ()=>{ openSpotlight(decodeURIComponent(card.getAttribute("data-full")), false); });
   });
 }
@@ -2468,15 +2582,19 @@ function mkTab(label, active, onClick){
 
 const PIE_COLORS = ["#c0392b","#1f3a5f","#1e6b4f","#a5730a","#6b2142","#2c6e8f","#8a4b08","#41474d"];
 
+// 문항 정답률 — 이 문항의 채점 대상 칸 전체에서 (맞은 칸 수 / 답한 칸 수).
 function computeQuestionAccuracy(item, rows){
-  if(!item || item.type === "short" || !item.correctAnswer) return null;
-  const correct = String(item.correctAnswer).trim();
+  if(!item || item.type === "short") return null;
+  const scored = item.scoredSlots || [];
+  if(!scored.length) return null;
   let total = 0, right = 0;
   (rows||[]).forEach(r=>{
-    const v = String((r.answers||[])[item.slotIndex] || "").trim();
-    if(v === ""){ return; }
-    total++;
-    if(v === correct) right++;
+    scored.forEach(sl=>{
+      const v = String((r.answers||[])[sl.slotIndex] || "").trim();
+      if(v === "") return;
+      total++;
+      if(v === String(sl.correct).trim()) right++;
+    });
   });
   if(total === 0) return null;
   return Math.round(right/total*100);
@@ -2499,10 +2617,10 @@ function showAccuracyMirage(item){
   }, 1400);
 }
 
-function renderDistributionPie(item, rows, colIndex, bodyEl){
+function renderDistributionPieInto(bodyEl, slotObj, rows, colIndex){
   let buckets = [];
-  if(item.type === "choice"){
-    buckets = (item.options||[]).map(opt=>({label:opt, count:0}));
+  if(slotObj.kind === "choice" && slotObj.options){
+    buckets = slotObj.options.map(opt=>({label:opt, count:0}));
     rows.forEach(r=>{
       const v = String((r.answers||[])[colIndex]||"").trim();
       const b = buckets.find(x=>x.label===v);
@@ -2531,8 +2649,7 @@ function renderDistributionPie(item, rows, colIndex, bodyEl){
   const legend = buckets.map((b,i)=>{
     const pct = total ? Math.round(b.count/total*100) : 0;
     const color = PIE_COLORS[i % PIE_COLORS.length];
-    const labelText = (item.type === "choice") ? escapeHtml(b.label) : escapeHtml(b.label);
-    return '<div class="legend-item"><span class="legend-swatch" style="background:'+color+'"></span><span class="legend-label">'+labelText+'</span><span class="legend-count">: '+b.count+'명 ('+pct+'%)</span></div>';
+    return '<div class="legend-item"><span class="legend-swatch" style="background:'+color+'"></span><span class="legend-label">'+escapeHtml(b.label)+'</span><span class="legend-count">: '+b.count+'명 ('+pct+'%)</span></div>';
   }).join("");
   bodyEl.innerHTML = '<div class="pie-wrap"><div class="pie" style="background:'+gradient+'"></div><div class="legend">'+legend+'</div></div>';
 }
