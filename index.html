@@ -314,10 +314,10 @@
   .tq-count-jump:hover{ color:var(--accent); }
 
   .tq-layout{
-    display:grid; grid-template-columns: 1fr minmax(520px, 600px); gap:18px;
+    display:grid; grid-template-columns: 1fr minmax(400px, 540px); gap:18px;
     max-width:none; width:100%; margin:0 auto; align-items:start; padding-bottom:72px;
   }
-  @media (max-width: 980px){ .tq-layout{ grid-template-columns: 1fr; } }
+  @media (max-width: 1024px){ .tq-layout{ grid-template-columns: 1fr; } }
 
   .tq-reflect-layout{
     display:flex; flex-direction:column; gap:16px; max-width:none; width:100%; padding-bottom:72px;
@@ -325,7 +325,7 @@
   .tq-reflect-qcard{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px 24px; flex:0 0 auto; }
   .tq-reflect-results{ flex:1 1 auto; min-height:0; }
   .reflect-guide{ font-size:17px; color:var(--muted); line-height:1.65; margin:0 0 10px; }
-  .teacher-panel .reflect-guide{ font-size:24px; }
+  .teacher-panel .reflect-guide{ font-size:calc(24px * var(--tq-scale, 1)); }
 
   .tq-card{
     background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px 18px;
@@ -335,30 +335,35 @@
     background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px 26px; min-height:200px;
     max-height:calc(100vh - 132px); overflow-y:auto;
   }
-  .teacher-panel .q-page{ font-size:30px; }
+  /* 교사용 문항별 결과 — 교실 뒷자리에서도 보이도록 크게. 저해상도 화면에서
+     아래로 잘리지 않게 fitTeacherView()가 --tq-scale을 자동으로 낮춰 칸에 맞춘다.
+     모든 크기를 calc(기본값 * var(--tq-scale))로 두면 한 변수만으로 전체가 축소된다. */
+  #view-results{ --tq-scale: 1; }
+  .teacher-panel .q-page{ font-size:calc(28px * var(--tq-scale, 1)); }
   .teacher-panel .qmeta-left{ flex-wrap:wrap; row-gap:4px; }
-  #tq-text{ font-size:42px; font-weight:700; line-height:1.5; min-width:0; overflow-wrap:break-word; }
-  .tq-reflect-qcard #tq-text{ font-size:26px; font-weight:700; margin:8px 0 4px; white-space:normal; }
+  #tq-text{ min-width:0; overflow-wrap:break-word; }
+  .teacher-panel #tq-text{ font-size:calc(48px * var(--tq-scale, 1)); font-weight:700; line-height:1.45; }
+  .tq-reflect-qcard #tq-text{ font-size:calc(30px * var(--tq-scale, 1)); font-weight:700; margin:8px 0 4px; white-space:normal; }
   #tq-clause{ margin:14px 0; }
-  #tq-clause .clause-cell .o{ font-size:26px; }
-  #tq-clause .clause-cell .m{ font-size:15px; }
-  #tq-clause .clause-cell .k{ font-size:16px; }
-  #tq-note{ font-size:24px; white-space:pre-wrap; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin:12px 0; line-height:1.6; }
+  #tq-clause .clause-cell .o{ font-size:calc(34px * var(--tq-scale, 1)); }
+  #tq-clause .clause-cell .m{ font-size:calc(19px * var(--tq-scale, 1)); }
+  #tq-clause .clause-cell .k{ font-size:calc(20px * var(--tq-scale, 1)); }
+  #tq-note{ font-size:calc(26px * var(--tq-scale, 1)); white-space:pre-wrap; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin:12px 0; line-height:1.6; }
   #tq-choices{ margin-top:10px; }
-  #tq-choices .choice-btn{ cursor:default; font-size:22px; padding:14px 10px; }
+  #tq-choices .choice-btn{ cursor:default; font-size:calc(30px * var(--tq-scale, 1)); padding:calc(18px * var(--tq-scale, 1)) calc(12px * var(--tq-scale, 1)); }
 
   .reveal-gate{ text-align:center; margin:10px 0; }
   .reveal-gate .btn.primary{ font-size:22px; font-weight:800; padding:20px 36px; }
   .result-tabs{ display:flex; gap:8px; margin:0 0 16px; }
-  .result-tabs .btn{ flex:1; font-size:30px; font-weight:700; padding:22px 8px; }
+  .result-tabs .btn{ flex:1; font-size:calc(28px * var(--tq-scale, 1)); font-weight:700; padding:calc(20px * var(--tq-scale, 1)) 8px; }
   .result-tabs .btn.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
 
   .pie-wrap{ display:flex; flex-direction:column; gap:22px; align-items:center; justify-content:center; margin:10px 0; }
-  .pie{ width:420px; height:420px; border-radius:50%; flex:0 0 auto; box-shadow:0 0 0 1px var(--line); }
+  .pie{ width:calc(360px * var(--tq-scale, 1)); height:calc(360px * var(--tq-scale, 1)); border-radius:50%; flex:0 0 auto; box-shadow:0 0 0 1px var(--line); }
   .legend{ display:flex; flex-direction:column; gap:16px; width:100%; }
-  .legend-item{ display:flex; align-items:center; gap:12px; font-size:40px; font-weight:700; color:var(--text); line-height:1.35; flex-wrap:wrap; }
+  .legend-item{ display:flex; align-items:center; gap:12px; font-size:calc(34px * var(--tq-scale, 1)); font-weight:700; color:var(--text); line-height:1.35; flex-wrap:wrap; }
   .legend-item .legend-count{ white-space:nowrap; }
-  .legend-swatch{ width:36px; height:36px; border-radius:6px; flex:0 0 auto; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+  .legend-swatch{ width:calc(32px * var(--tq-scale, 1)); height:calc(32px * var(--tq-scale, 1)); border-radius:6px; flex:0 0 auto; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
   .answer-big{
     text-align:center; font-size:64px; font-weight:700; line-height:1.15;
     color:#fff; background:#7a2419; border-radius:16px; padding:34px 20px;
@@ -1320,9 +1325,11 @@ document.getElementById("btn-extra-back").addEventListener("click", ()=> setTab(
 /* ============================================================
    문항 화면
 ============================================================ */
-function renderPageLabel(el, page){
+// 문항 라벨 — "N번 문제" (학습지 쪽수 대신 문항 번호). 교실에서 교사가
+// "3번 문제 볼게요"처럼 부르기 쉽도록.
+function renderQLabel(el, qIndex){
   if(!el) return;
-  el.textContent = page ? "학습지 "+page+"쪽" : "";
+  el.textContent = (qIndex >= 0) ? ((qIndex + 1) + "번 문제") : "";
 }
 
 function renderQuestion(){
@@ -1330,7 +1337,7 @@ function renderQuestion(){
   const q = QUESTIONS[qi];
   renderClauseTable();
   refreshExtraUnlocked();
-  renderPageLabel(document.getElementById("q-page"), q.page);
+  renderQLabel(document.getElementById("q-page"), qi);
   document.getElementById("q-num").textContent = (qi+1)+" / "+QUESTIONS.length;
 
   const qGuideEl = document.getElementById("q-guide");
@@ -2034,9 +2041,9 @@ function celebrateTamgu(c){
   document.getElementById("tg-celebrate").classList.remove("hidden");
 }
 function questionLabelFor(item, idx){
-  const page = item.page ? (" · 학습지 "+item.page+"쪽") : "";
+  const num = (item.qIndex >= 0) ? ((item.qIndex+1) + "번 문제") : "성찰 질문";
   const base = String(item.text || "문항").split("\n")[0].trim();
-  return "문항" + page + " · " + (idx+1) + " (" + (base.length>36 ? base.slice(0,34)+"…" : base) + ")";
+  return num + " · 칸 " + (idx+1) + " (" + (base.length>36 ? base.slice(0,34)+"…" : base) + ")";
 }
 let qstatsTimer = null;
 function requestQuestionStatsRebuild(){
@@ -2196,7 +2203,7 @@ function buildQuestionJump(){
     const n = document.createElement("span");
     n.className = "qjn"; n.textContent = (idx + 1);
     const d = document.createElement("span");
-    d.className = "qjd"; d.textContent = (item.page ? ("학습지 "+item.page+"쪽 · ") : "") + qjumpDesc(item);
+    d.className = "qjd"; d.textContent = ((item.qIndex >= 0 ? ((item.qIndex+1)+"번 · ") : "성찰 · ")) + qjumpDesc(item);
     row.appendChild(n); row.appendChild(d);
     if(idx === tqIndex){
       const now = document.createElement("span");
@@ -2262,7 +2269,10 @@ function renderTeacherQuestionView(showReveal){
   const isReflect = !!item.isReflect;
   layoutTeacherQuestionDom(isReflect);
 
-  renderPageLabel(document.getElementById("tq-page"), item.page);
+  const tqPageEl = document.getElementById("tq-page");
+  tqPageEl.textContent = isReflect
+    ? ("성찰 질문 " + (item.slotIndex - SLOTS.length + 1))
+    : ((item.qIndex + 1) + "번 문제");
   document.getElementById("tq-text").textContent = item.text;
 
   const guideEl = document.getElementById("tq-guide");
@@ -2304,11 +2314,50 @@ function renderTeacherQuestionView(showReveal){
 
   document.getElementById("reveal-gate").classList.toggle("hidden", tqRevealed);
   document.getElementById("tq-result").classList.toggle("hidden", !tqRevealed);
-  if(!tqRevealed) return;
-
-  resultTab = "student";
-  renderResultTabsAndBody(item);
+  if(tqRevealed){
+    resultTab = "student";
+    renderResultTabsAndBody(item);
+  }
+  scheduleFitTeacherView();
 }
+
+/* ============================================================
+   교사용 문항별 결과 — 저해상도 화면에서도 아래로 잘리지 않게
+   내용을 칸 높이에 맞춰 자동 축소한다. 큰 배율(1.7)에서 시작해
+   좌/우 칸이 스크롤을 만들지 않는 선까지만 --tq-scale을 낮춘다.
+   (모든 폰트·원그래프 크기가 calc(기본값 * var(--tq-scale)) 이므로
+    변수 하나만 바꾸면 전체가 함께 줄어든다.)
+============================================================ */
+let fitTeacherTimer = null;
+function scheduleFitTeacherView(){
+  clearTimeout(fitTeacherTimer);
+  fitTeacherTimer = setTimeout(function(){
+    requestAnimationFrame(fitTeacherView);
+  }, 30);
+}
+function fitTeacherView(){
+  const vr = document.getElementById("view-results");
+  if(!vr || vr.classList.contains("hidden")) return;
+  const ids = ["tq-card-normal","tq-side-normal","tq-reflect-qcard","tq-reflect-results"];
+  const boxes = ids.map(function(id){ return document.getElementById(id); })
+    .filter(function(el){ return el && el.offsetParent !== null; });
+  if(!boxes.length) return;
+  const MAX = 1.7, MIN = 0.55, STEP = 0.05;
+  let s = MAX, guard = 0;
+  vr.style.setProperty("--tq-scale", s.toFixed(2));
+  const overflowing = function(){
+    return boxes.some(function(b){ return b.scrollHeight > b.clientHeight + 2; });
+  };
+  while(s > MIN && overflowing() && guard++ < 40){
+    s -= STEP;
+    vr.style.setProperty("--tq-scale", s.toFixed(2));
+  }
+}
+let fitResizeTimer = null;
+window.addEventListener("resize", function(){
+  clearTimeout(fitResizeTimer);
+  fitResizeTimer = setTimeout(fitTeacherView, 150);
+});
 
 function renderResultTabsAndBody(item){
   const rows = (latestTeacherData && latestTeacherData.rows) || [];
@@ -2324,8 +2373,8 @@ function renderResultTabsAndBody(item){
 
   tabsEl.classList.remove("hidden");
   tabsEl.innerHTML = "";
-  const t1 = mkTab("학생 정답", resultTab==="student", ()=>{ resultTab="student"; renderResultTabsAndBody(item); });
-  const t2 = mkTab("정답", resultTab==="answer", ()=>{ resultTab="answer"; renderResultTabsAndBody(item); });
+  const t1 = mkTab("학생 정답", resultTab==="student", ()=>{ resultTab="student"; renderResultTabsAndBody(item); scheduleFitTeacherView(); });
+  const t2 = mkTab("정답", resultTab==="answer", ()=>{ resultTab="answer"; renderResultTabsAndBody(item); scheduleFitTeacherView(); });
   tabsEl.appendChild(t1); tabsEl.appendChild(t2);
 
   if(resultTab === "answer"){
